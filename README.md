@@ -1,4 +1,4 @@
-#Link to Visuzliation  
+#Link to Visualization 
 
 http://bl.ocks.org/AmanMander123/raw/ebcf54644bd3672e5b14613318740eea/  
 
