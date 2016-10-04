@@ -1,3 +1,7 @@
+#Link to Visuzliation  
+
+http://bl.ocks.org/AmanMander123/raw/ebcf54644bd3672e5b14613318740eea/  
+
 #Summary  
 This visualization describes the percentage of passengers that surived during the Titanic disaster. The circles represent the susbet of passengers categorized by sex, passenger class and point of embarkation. The size of the circle corresponds to the percent value; the higher the proportion of survivers, the larger the circle.
 
