@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3: Using color in SVG</title>
+      <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+        <style type="text/css">
+            
+            div.tooltip { 
+                position: absolute;     
+                text-align: center;     
+                width: 80px;          
+                height: 40px;         
+                padding: 2px;       
+                font: 12px sans-serif;    
+                background: #ff99ff; 
+                border: 0px;    
+                border-radius: 8px;     
+                pointer-events: none;     
+              }  
+              
+        </style>
+    </head>
+    <body>
+        <script type="text/javascript">
+            
+function draw(data) {
+
+  //Set variables for width and height of svg element
+  w = 1200;
+  h = 500;
+
+  //Get unique values for Sex, Pclass and Embarked
+  var uniqueSex = d3.map(data, function(d){return d["Sex"];}).keys()
+  var uniquePclass = d3.map(data, function(d){return d["Pclass"];}).keys()
+  var uniqueEmbarked = d3.map(data, function(d){return d["Embarked"];}).keys()
+
+  
+  //Clean the values - eliminate any blanks or undefined values
+  //Function to clean the values
+  function cleaner(arr) {
+    var filteredArray = arr.filter(Boolean);
+    var filteredArray = filteredArray.filter(function(n) { return n != "undefined" });
+    return filteredArray;
+  }
+
+  //Pass the variables through the cleaner function
+  uniqueSex = cleaner(uniqueSex);
+  uniquePclass = cleaner(uniquePclass);
+  uniqueEmbarked = cleaner(uniqueEmbarked);
+
+  //Create an array containing data on the unique sex values in the dataset
+  var sexData = []
+  var sexSurvived = []
+  var sexSurvivedPercent = []
+  for (var i = 0; i < uniqueSex.length; i++) {
+    sexData[i] = data.filter(function(d) { return d["Sex"] == uniqueSex[i]});
+    sexSurvived[i] = d3.sum(sexData[i], function(d) {return parseFloat(d["Survived"])});
+    sexSurvivedPercent[i] = sexSurvived[i] / sexData[i].length * 100
+  }
+
+  //Create an array containing data on the unique Pclass values in the dataset
+  var PclassData = []
+  var PclassSurvived = []
+  var PclassSurvivedPercent = []
+  for (var i = 0; i < uniquePclass.length; i++) {
+    PclassData[i] = data.filter(function(d) { return d["Pclass"] == uniquePclass[i]});
+    PclassSurvived[i] = d3.sum(PclassData[i], function(d) {return parseFloat(d["Survived"])});
+    PclassSurvivedPercent[i] = PclassSurvived[i] / PclassData[i].length * 100
+  }
+
+  //Create an array containing data on the unique Embarked values in the dataset
+  var EmbarkedData = []
+  var EmbarkedSurvived = []
+  var EmbarkedSurvivedPercent = []
+  for (var i = 0; i < uniqueEmbarked.length; i++) {
+    EmbarkedData[i] = data.filter(function(d) { return d["Embarked"] == uniqueEmbarked[i]});
+    EmbarkedSurvived[i] = d3.sum(EmbarkedData[i], function(d) {return parseFloat(d["Survived"])});
+    EmbarkedSurvivedPercent[i] = EmbarkedSurvived[i] / EmbarkedData[i].length * 100
+  }
+
+  //Create object of all Suvival Data
+  var SurvivalData = [ { key: "Male", value: sexSurvivedPercent[0], survivedCount: sexSurvived[0]},
+                        { key: "Female", value: sexSurvivedPercent[1], survivedCount: sexSurvived[1]},
+                         { key: "1st Class", value: PclassSurvivedPercent[0], survivedCount: PclassSurvived[0]},
+                         { key: "2nd Class", value: PclassSurvivedPercent[1], survivedCount: PclassSurvived[1]},
+                         { key: "3rd Class", value: PclassSurvivedPercent[2], survivedCount: PclassSurvived[2]},
+                         { key: "Port S", value: EmbarkedSurvivedPercent[0], survivedCount: EmbarkedSurvived[0]},
+                         { key: "Port C", value: EmbarkedSurvivedPercent[1], survivedCount: EmbarkedSurvived[1]},
+                         { key: "Port Q", value: EmbarkedSurvivedPercent[2], survivedCount: EmbarkedSurvived[2]}
+                         ]
+
+  //Define key function, to be used when binding data
+  var key = function(d) {
+              return d.key;
+  };
+
+// Define the div for the tooltip
+var div = d3.select("body").append("div") 
+    .attr("class", "tooltip")       
+    .style("opacity", 0);
+
+  //Create SVG element
+  var svg = d3.select("body")
+               .append("svg")
+               .attr("width", w)
+               .attr("height", h);
+
+  //Create the circles on the svg element
+  var circles = svg.selectAll("circle")
+                   .data(SurvivalData, key)
+                   .enter()
+                   .append("circle");
+
+  //Assign the attributes to the circles
+  circles.attr("cx", function(d, i) {
+                       return (150 * i) + 100;
+                    })
+                   .attr("cy", h/2)
+                   .attr("r", function(d) {
+                        return Math.sqrt(d.value) * 8;
+                   })
+                   .attr("fill", "#AEC6CF")
+                   .on("mouseover", function(d) {   
+                      div.transition()    
+                         .duration(200)    
+                         .style("opacity", .9);    
+                      div.html(d.key + "<br/>"  + d3.format(".2f")(d.value) + "%" + "<br/>" + "Count: " + d.survivedCount)  
+                          .style("left", (d3.event.pageX) + "px")   
+                          .style("top", (d3.event.pageY) + "px");  
+                  })          
+                  .on("mouseout", function(d) {   
+                      div.transition()    
+                         .duration(500)    
+                         .style("opacity", 0); 
+        });
+
+  //Create labels
+  svg.selectAll("text")
+      .data(SurvivalData, key)    //Bind data with custom key function
+      .enter()
+      .append("text")
+      .text(function(d) {
+            return d.key
+        })
+      .attr("text-anchor", "middle")
+      .attr("x", function(d, i) {
+            return (150 * i) + 100;
+         })
+      .attr("y", h/2)
+      .attr("font-family", "sans-serif")
+      .attr("font-size", "11px")
+      .attr("fill", "white");
+
+  //Add title
+  svg.append("text")
+      .attr("x", (w / 2))             
+      .attr("y", 50)
+      .attr("text-anchor", "middle")  
+      .style("font-size", "30px") 
+      .style("text-decoration", "underline")  
+      .text("Titanic Disaster Survival Rate")
+
+  svg.append("text")
+      .attr("x", (w / 2))             
+      .attr("y", 100)
+      .attr("text-anchor", "middle")  
+      .style("font-size", "30px") 
+      .style("text-decoration", "underline")  
+      .text("By Sex, Passenger Class and Port of Embarkation")
+
+  //Add text to describe meaning of Port letters
+  svg.append("text")
+      .attr("x", (w / 2))             
+      .attr("y", h - 50)
+      .attr("text-anchor", "middle")  
+      .style("font-size", "20px") 
+      .text("Port S = Southampton, Port C = Cherbourg, Post Q = Queenstown")
+
+  //Add lines between the sex, passenger class and port of embarkation to separate the categories
+  svg.append("line")
+  .attr("x1", (150 * 1) + 175)  
+  .attr("y1", 120)
+  .attr("x2", (150 * 1) + 175)    
+  .attr("y2", h - 100)
+  .style("stroke-width", 2)
+  .style("stroke", "black")
+  .style("fill", "none");
+
+  svg.append("line")
+  .attr("x1", (150 * 4) + 175)  
+  .attr("y1", 120)
+  .attr("x2", (150 * 4) + 175)    
+  .attr("y2", h - 100)
+  .style("stroke-width", 2)
+  .style("stroke", "black")
+  .style("fill", "none");
+}
+
+//Call the draw function
+d3.csv("titanic_data.csv", draw);
+
+        </script>
+    </body>
+</html>
